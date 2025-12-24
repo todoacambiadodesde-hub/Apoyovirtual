@@ -237,17 +237,17 @@ if __name__ == '__main__':
         base_modulos = os.path.join(basedir, 'materias_modulos')
         if not os.path.exists(base_modulos):
             os.makedirs(base_modulos)
-            if not os.path.exists(os.path.join(base_modulos, '__init__.py')):
-                open(os.path.join(base_modulos, '__init__.py'), 'a').close()
 
         for nom, _ in materias_nombres:
             folder = normalizar_nombre(nom)
             ruta_folder = os.path.join(base_modulos, folder)
             if not os.path.exists(ruta_folder):
                 os.makedirs(ruta_folder)
-                open(os.path.join(ruta_folder, '__init__.py'), 'a').close()
-                with open(os.path.join(ruta_folder, 'preguntas.py'), 'w') as f:
-                    f.write('LISTA_PREGUNTAS = [{"e": "Pregunta de prueba", "r": "0"}]')
+                preg_path = os.path.join(ruta_folder, 'preguntas.py')
+                if not os.path.exists(preg_path):
+                    with open(preg_path, 'w', encoding='utf-8') as f:
+                        f.write('LISTA_PREGUNTAS = [{"e": "Pregunta de prueba", "r": "0"}]')
 
+    # Configuración correcta para el puerto en Render
     port = int(os.environ.get("PORT", 10000))
-        app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=port)
