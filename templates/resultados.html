@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Resultados - Plataforma de Estudio</title>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 40px; }
+        .box { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .score-header { text-align: center; margin-bottom: 30px; padding: 20px; background: #e8f0fe; border-radius: 10px; }
+        .score-header h1 { color: #1a73e8; margin: 0; }
+        .ok { color: #28a745; font-weight: bold; }
+        .error { color: #d93025; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+        th, td { border: 1px solid #ddd; padding: 15px; text-align: left; }
+        th { background: #f8f9fa; }
+        .btn-volver { display: inline-block; margin-top: 30px; padding: 12px 25px; background: #1a73e8; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="box">
+        <div class="score-header">
+            <h1>Resultados: {{ r.materia }}</h1>
+            <h2>Calificación: {{ r.aciertos }} / {{ r.total }}</h2>
+            <p>Porcentaje de éxito: {{ ((r.aciertos / r.total) * 100) | int }}%</p>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Pregunta</th>
+                    <th>Tu respuesta</th>
+                    <th>Respuesta Correcta</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in r.detalle %}
+                <tr>
+                    <td>{{ d.enunciado | safe }}</td>
+                    <td>{{ d.tu_respuesta }}</td>
+                    <td>{{ d.correcta }}</td>
+                    <td class="{{ 'ok' if d.es_correcta else 'error' }}">
+                        {{ '✅ Correcto' if d.es_correcta else '❌ Incorrecto' }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div style="text-align: center;">
+            <a href="/dashboard" class="btn-volver">Volver al Panel de Materias</a>
+        </div>
+    </div>
+
+</body>
+</html>

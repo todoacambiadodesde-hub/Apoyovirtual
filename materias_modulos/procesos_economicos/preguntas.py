@@ -1,0 +1,1 @@
+LISTA_PREGUNTAS = [{"e": "Pregunta de prueba", "r": "0"}]

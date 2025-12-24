@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control - 15 Materias</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f1f5f9;
+            --nav: #1e293b;
+            --text: #334155;
+            --exactas-accent: #3b82f6; /* Azul para ciencias */
+            --sociales-accent: #64748b; /* Gris azulado para sociales */
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            color: var(--text);
+        }
+
+        nav {
+            background-color: var(--nav);
+            padding: 1.2rem 5%;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .container {
+            padding: 2rem 5%;
+            max-width: 1400px;
+            margin: auto;
+        }
+
+        header { margin-bottom: 2.5rem; }
+        h2 { font-weight: 300; font-size: 1.8rem; margin: 0; }
+        p { color: #64748b; margin-top: 5px; }
+
+        .grid-materias {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .card-materia {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 5px solid transparent;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 120px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+
+        /* Diferenciación visual */
+        .card-materia.exacta { border-left-color: var(--exactas-accent); }
+        .card-materia.teoria { border-left-color: var(--sociales-accent); }
+
+        .card-materia:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 20px -5px rgba(0,0,0,0.1);
+            background-color: #f8fafc;
+        }
+
+        .materia-info h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+
+        .tipo-tag {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            width: fit-content;
+            margin-bottom: 10px;
+        }
+
+        .tag-exacta { background: #dbeafe; color: #1e40af; }
+        .tag-teoria { background: #f1f5f9; color: #475569; }
+
+        .btn-entrar {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-top: 15px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <span style="letter-spacing: 1px; font-weight: 600;">ACADEMIA VIRTUAL</span>
+        <span>Hola, <strong>{{ nombre }}</strong></span>
+    </nav>
+
+    <div class="container">
+        <header>
+            <h2>Plan de Estudios Personalizado</h2>
+            <p>Selecciona una materia para comenzar tu evaluación.</p>
+        </header>
+
+        <div class="grid-materias">
+            {% for materia in materias %}
+            <a href="/examen/{{ materia.id }}" class="card-materia {% if materia.es_exacta %}exacta{% else %}teoria{% endif %}">
+                <div>
+                    <div class="tipo-tag {% if materia.es_exacta %}tag-exacta{% else %}tag-teoria{% endif %}">
+                        {% if materia.es_exacta %}CIENCIAS EXACTAS{% else %}HUMANIDADES / SALUD{% endif %}
+                    </div>
+                    <div class="materia-info">
+                        <h3>{{ materia.nombre }}</h3>
+                    </div>
+                </div>
+                <div class="btn-entrar">Click para iniciar →</div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+</body>
+</html>
