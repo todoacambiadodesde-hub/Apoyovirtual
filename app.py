@@ -16,7 +16,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # --- MODELOS ---
-class niggaUsuario(db.Model):
+class Usuario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
 
@@ -250,4 +250,4 @@ if __name__ == '__main__':
                     f.write('LISTA_PREGUNTAS = [{"e": "Pregunta de prueba", "r": "0"}]')
 
     port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+        app.run(host='0.0.0.0', port=port)
