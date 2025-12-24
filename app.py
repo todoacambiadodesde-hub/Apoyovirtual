@@ -218,6 +218,7 @@ def ver_resultados():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
+        
         materias_nombres = [
             ('Cálculo', True), ('Física', True), ('Física para Ingenierías', True),
             ('Temas selectos de Matemáticas', True), ('Temas selectos de Química', True),
@@ -236,7 +237,8 @@ if __name__ == '__main__':
         base_modulos = os.path.join(basedir, 'materias_modulos')
         if not os.path.exists(base_modulos):
             os.makedirs(base_modulos)
-            open(os.path.join(base_modulos, '__init__.py'), 'a').close()
+            if not os.path.exists(os.path.join(base_modulos, '__init__.py')):
+                open(os.path.join(base_modulos, '__init__.py'), 'a').close()
 
         for nom, _ in materias_nombres:
             folder = normalizar_nombre(nom)
@@ -247,5 +249,5 @@ if __name__ == '__main__':
                 with open(os.path.join(ruta_folder, 'preguntas.py'), 'w') as f:
                     f.write('LISTA_PREGUNTAS = [{"e": "Pregunta de prueba", "r": "0"}]')
 
-      port = int(os.environ.get("PORT", 5000))
-      app.run(host='0.0.0.0', port=port)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
