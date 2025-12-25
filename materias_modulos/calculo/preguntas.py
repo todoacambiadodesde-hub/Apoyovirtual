@@ -1,90 +1,97 @@
-import random
-from sympy import symbols, diff, limit, latex, simplify, sin, cos, tan, log, sqrt
+import random 
+from sympy import symbols, diff, limit, latex, simplify, sin, cos, tan, log, sqrt 
 
-x = symbols('x')
+x = symbols('x') 
 
-def generar_una_pregunta():
-    """Genera variantes basadas en las fotos: cocientes trigonométricos y racionales complejos."""
+def crear_expresion_compleja(n_terminos=None):
+    """Genera polinomios dinámicos con potencias variadas y fracciones ocasionales (10%)."""
+    if n_terminos is None:
+        n_terminos = random.choice([2, 3])
     
-    # Probabilidad de raíz (5%) o tipos normales (95%)
-    es_pregunta_raiz = random.random() < 0.05
-    tipo = 'limite_raiz' if es_pregunta_raiz else random.choice(['limite', 'derivada', 'tangente'])
+    terminos = []
+    # Pool de grados para asegurar diversidad: constantes, lineales y potencias altas
+    grados_posibles = [0, 1, 2, 3, 4, 7] 
+    random.shuffle(grados_posibles)
     
-    a = random.randint(2, 6)
-    b = random.randint(1, 4)
+    for i in range(n_terminos):
+        a = random.randint(2, 8)
+        signo = random.choice([1, -1])
+        grado = grados_posibles[i]
+        
+        if grado == 0: terminos.append(signo * a)
+        elif grado == 1: terminos.append(signo * a * x)
+        else: terminos.append(signo * a * x**grado)
+    
+    # Capacidad de fracciones internas (4/x) limitada al 10%
+    if random.random() < 0.10:
+        b = random.randint(2, 9)
+        terminos.append(random.choice([1, -1]) * (b/x))
+        
+    return sum(terminos)
 
+def generar_pregunta_por_tipo(tipo):
+    """Genera el ejercicio según el tipo exacto solicitado por la cuota."""
+    
     if tipo == 'limite':
-        # VARIANTES DE LÍMITES (Basados en el nivel de las fotos)
-        subtipo = random.choice(['trig', 'racional', 'infinito'])
-        
-        if subtipo == 'trig':
-            # Límite tipo: (sen x + cos x) / cos x cuando x -> 0
-            f = (sin(x) + cos(x)) / cos(x)
-            enunciado = f"Calcule el límite trigonométrico: $$\\lim_{{x \\to 0}} {latex(f)}$$"
+        # Subtipos de límites para asegurar variedad (incluyendo división compleja)
+        sub = random.random()
+        if sub < 0.10: # Límite con radical (1 de cada 10 límites aprox)
+            a = random.randint(2, 9)
+            f = (sqrt(x + a) - sqrt(a)) / x
+            enunciado = f"Calcule el límite con radical: $$\\lim_{{x \\to 0}} {latex(f)}$$"
             resultado = limit(f, x, 0)
-        
-        elif subtipo == 'racional':
-            # Límite tipo: (x^2 - 9) / (x + 4) cuando x -> a
-            punto = random.randint(-3, 3)
-            num = x**2 - (a**2)
-            den = x + b
-            enunciado = f"Determine el valor del límite: $$\\lim_{{x \\to {punto}}} \\frac{{{latex(num)}}}{{{latex(den)}}}$$"
-            resultado = limit(num/den, x, punto)
-            
-        else: # infinito
-            # Límite al infinito de un cociente complejo
-            f = (a*x**2 + b) / (b*x**2 - a*x + 8)
-            enunciado = f"Calcule el límite al infinito: $$\\lim_{{x \\to \\infty}} {latex(f)}$$"
-            resultado = limit(f, x, 'oo')
-
-    elif tipo == 'limite_raiz':
-        # Variante de raíz (1 de cada 20)
-        enunciado = f"Calcule el límite con radical: $$\\lim_{{x \\to 0}} \\frac{{\\sqrt{{x + {a}}} - \\sqrt{{{a}}}}}{{x}}$$"
-        resultado = limit((sqrt(x+a) - sqrt(a))/x, x, 0)
+        else: # Límites de división (3x^2-5x+7)/(3x^2-5) o al infinito
+            num, den = crear_expresion_compleja(), crear_expresion_compleja()
+            punto = random.choice([0, 1, 'oo'])
+            txt_punto = 'x \\to \\infty' if punto == 'oo' else f'x \\to {punto}'
+            enunciado = f"Determine el valor del límite: $$\\lim_{{{txt_punto}}} \\frac{{{latex(num)}}}{{{latex(den)}}}$$"
+            resultado = limit(num/den, x, punto if punto != 'oo' else 'oo')
 
     elif tipo == 'derivada':
-        # VARIANTES EXTRAÍDAS DE TUS FOTOS:
-        variante = random.choice([1, 2, 3, 4])
-        
-        if variante == 1: # sen(2x^2 - 3x)
-            f = sin(a*x**2 - b*x)
-            enunciado = f"Encontrar la derivada de la función: $$f(x) = {latex(f)}$$"
-        elif variante == 2: # (x^2 - 9) / (x + 4)
-            f = (x**2 - 9) / (x + 4)
-            enunciado = f"Halle la derivada $f'(x)$ del cociente: $$f(x) = {latex(f)}$$"
-        elif variante == 3: # (sen x + cos x) / cos x
-            f = (sin(x) + cos(x)) / cos(x)
+        variante = random.random()
+        if variante < 0.70: # Cociente complejo (lo que más pediste)
+            f = crear_expresion_compleja() / crear_expresion_compleja()
+            enunciado = f"Halle la derivada de la función: $$f(x) = {latex(f)}$$"
+        elif variante < 0.85: # Trigonométrica
+            f = sin(random.randint(2, 5)*x**2 - random.randint(1, 4)*x)
             enunciado = f"Derive la expresión trigonométrica: $$f(x) = {latex(f)}$$"
-        else: # ((x+1)^2) / (3x + 4)
-            f = ((x + 1)**2) / (a*x + b)
-            enunciado = f"Aplique la regla del cociente y cadena para: $$f(x) = {latex(f)}$$"
-        
+        else: # Potencia compuesta
+            f = ((x + random.randint(1, 2))**random.randint(2, 6)) / (random.randint(2, 5)*x + 3)
+            enunciado = f"Aplique reglas de derivación para: $$f(x) = {latex(f)}$$"
         resultado = diff(f, x)
 
-    else: # TANGENTE (Basada en el ejercicio 5 de tu foto)
-        # f(x) = (x^2 + 3) / (2x^2 - 3x + 8)
-        num = x**2 + 3
-        den = 2*x**2 - 3*x + 8
+    else: # TANGENTE (Fijo 2 de 20)
+        num = crear_expresion_compleja(n_terminos=2)
+        den = crear_expresion_compleja(n_terminos=2)
         f = num / den
-        x0 = 1
-        m = diff(f, x).subs(x, x0)
-        y0 = f.subs(x, x0)
-        recta_derecha = simplify(m*(x - x0) + y0)
-        enunciado = f"Encontrar la ecuación de la recta tangente a la curva $$f(x) = {latex(f)}$$ cuando $$x = {x0}$$."
-        resultado = recta_derecha
+        x0 = random.choice([0, 1])
+        try:
+            m = diff(f, x).subs(x, x0)
+            y0 = f.subs(x, x0)
+            if m.is_infinite or y0.is_infinite: return generar_pregunta_por_tipo('tangente')
+            recta = simplify(m*(x - x0) + y0)
+            enunciado = f"Encuentre la recta tangente a $$f(x) = {latex(f)}$$ en el punto $$x = {x0}$$."
+            resultado = recta
+        except:
+            return generar_pregunta_por_tipo('tangente')
 
-    # Traducción final para el sistema
-    res_str = str(resultado).replace('**', '^').replace('oo', '∞')
+    # Limpieza de formato para salida humana
+    res_str = str(simplify(resultado)).replace('**', '^').replace('oo', '∞')
+    for i in range(30, 1, -1):
+        res_str = res_str.replace(f"{i}*x", f"{i}x")
+    res_str = res_str.replace("*", "")
+    
     return {"e": enunciado, "r": res_str}
 
-def obtener_20_preguntas():
-    preguntas = []
-    enunciados_vistos = set()
-    while len(preguntas) < 20:
-        p = generar_una_pregunta()
-        if p['e'] not in enunciados_vistos:
-            enunciados_vistos.add(p['e'])
-            preguntas.append(p)
-    return preguntas
+def obtener_bloque_examen_fijo():
+    """Genera exactamente 9 límites, 9 derivadas y 2 tangentes."""
+    lista_tipos = (['limite'] * 9) + (['derivada'] * 9) + (['tangente'] * 2)
+    random.shuffle(lista_tipos) # Mezclamos el orden para que no salgan todos los límites juntos
+    
+    bloque_final = []
+    for tipo in lista_tipos:
+        bloque_final.append(generar_pregunta_por_tipo(tipo))
+    return bloque_final
 
-LISTA_PREGUNTAS = obtener_20_preguntas()
+# Esta es la lista que tu programa principal consumirá
+LISTA_PREGUNTAS = obtener_bloque_examen_fijo()
