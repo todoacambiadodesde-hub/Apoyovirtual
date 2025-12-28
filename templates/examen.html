@@ -2,84 +2,221 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Examen - {{ materia.nombre }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ materia.nombre }} - Examen</title>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 40px; }
-        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 600px; text-align: center; position: relative; }
-        .timer { color: #d93025; font-size: 24px; font-weight: bold; text-align: right; margin-bottom: 10px; }
-        .progreso { text-align: left; color: #666; font-weight: bold; margin-bottom: 20px; }
-        .opciones-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
-        .btn-opt { padding: 15px; border: 2px solid #1a73e8; background: white; color: #1a73e8; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-opt:hover { background: #1a73e8; color: white; }
-        .input-mate { width: 100%; padding: 12px; margin-top: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; font-size: 16px; }
-        .btn-enviar { background: #1a73e8; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; margin-top: 20px; cursor: pointer; font-size: 16px; font-weight: bold; position: relative; z-index: 10; }
-        
-        /* Ajuste para asegurar que el botón de terminar sea cliqueable */
-        .btn-terminar { background: #28a745; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; margin-top: 20px; cursor: pointer; font-weight: bold; display: none; position: relative; z-index: 20; }
+        :root {
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --primary: #2d3436; /* Color oscuro minimalista */
+            --accent: #0984e3;  /* Azul sutil */
+            --text-main: #2d3436;
+            --text-muted: #636e72;
+            --error: #d63031;
+            --success: #00b894;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg); 
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container { 
+            width: 90%; 
+            max-width: 550px; 
+            background: var(--card-bg); 
+            padding: 40px; 
+            border-radius: 24px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        .header-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .timer { 
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--error);
+            background: #fff5f5;
+            padding: 8px 15px;
+            border-radius: 12px;
+        }
+
+        .progreso { 
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        h2 { 
+            font-weight: 600; 
+            font-size: 1.5rem;
+            margin: 0 0 10px 0;
+            color: var(--primary);
+        }
+
+        .enunciado {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            margin: 30px 0;
+            color: var(--text-main);
+            min-height: 80px;
+        }
+
+        /* Estilo para Inputs y Botones */
+        .input-mate { 
+            width: 100%; 
+            padding: 16px; 
+            border: 1.5px solid #e1e4e8;
+            border-radius: 14px; 
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .input-mate:focus { border-color: var(--accent); }
+
+        .opciones-grid { 
+            display: grid; 
+            grid-template-columns: 1fr; 
+            gap: 12px; 
+        }
+
+        .btn-opt { 
+            padding: 16px; 
+            border: 1.5px solid #f1f2f6;
+            background: #f1f2f6;
+            color: var(--text-main);
+            border-radius: 14px; 
+            cursor: pointer; 
+            font-weight: 500;
+            font-size: 1rem;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .btn-opt:hover { 
+            background: var(--accent); 
+            color: white; 
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .btn-enviar { 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 18px; 
+            width: 100%; 
+            border-radius: 14px; 
+            margin-top: 20px; 
+            cursor: pointer; 
+            font-size: 1rem; 
+            font-weight: 600;
+            transition: opacity 0.3s;
+        }
+
+        .btn-enviar:hover { opacity: 0.9; }
+
+        .btn-terminar { 
+            background: var(--success); 
+            color: white; 
+            border: none; 
+            padding: 18px; 
+            width: 100%; 
+            border-radius: 14px; 
+            margin-top: 20px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            display: none; 
+        }
+
+        .abandonar {
+            display: block;
+            margin-top: 30px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.85rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .abandonar:hover { color: var(--error); }
+
+        .hint { font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <div class="timer">Tiempo: <span id="clock">--:--</span></div>
-    <p class="progreso">Pregunta <span id="num_pregunta">1</span> de 20</p>
+<div class="container">
+    <div class="header-info">
+        <span class="progreso">Pregunta <span id="num_pregunta">1</span> / 20</span>
+        <div class="timer" id="clock">03:00</div>
+    </div>
     
     <h2>{{ materia.nombre }}</h2>
-    <hr>
     
-    <div style="font-size: 20px; margin: 25px 0; line-height: 1.5;">
+    <div class="enunciado">
         {{ pregunta.enunciado | safe }}
     </div>
 
     <div id="contenedor-respuestas">
         {% if materia.es_exacta %}
-            <input type="text" id="resp_abierta" class="input-mate" placeholder="Tu respuesta (ej: 2*x + 5)">
-            <p style="font-size: 12px; color: #666; margin-top: 5px;">* Potencia: ** | Fracción: /</p>
-            <button class="btn-enviar" onclick="enviarRespuesta(document.getElementById('resp_abierta').value)">Enviar Respuesta</button>
+            <input type="text" id="resp_abierta" class="input-mate" placeholder="Escribe tu respuesta..." autofocus>
+            <p class="hint">Ejemplo: 4/x, x**6, sin(x), sqrt(x)</p>
+            <button class="btn-enviar" onclick="enviarRespuesta(document.getElementById('resp_abierta').value)">Confirmar respuesta</button>
         {% else %}
             <div class="opciones-grid">
-                <button class="btn-opt" onclick="enviarRespuesta('{{ pregunta.opcion_a }}')">A) {{ pregunta.opcion_a }}</button>
-                <button class="btn-opt" onclick="enviarRespuesta('{{ pregunta.opcion_b }}')">B) {{ pregunta.opcion_b }}</button>
-                <button class="btn-opt" onclick="enviarRespuesta('{{ pregunta.opcion_c }}')">C) {{ pregunta.opcion_c }}</button>
-                <button class="btn-opt" onclick="enviarRespuesta('{{ pregunta.opcion_d }}')">D) {{ pregunta.opcion_d }}</button>
+                <button class="btn-opt" onclick="enviarRespuesta('{{ pregunta.opcion_a }}')">{{ pregunta.opcion_a }}</button>
+                <button class="btn-opt" onclick="enviarRespuesta('{{ pregunta.opcion_b }}')">{{ pregunta.opcion_b }}</button>
+                <button class="btn-opt" onclick="enviarRespuesta('{{ pregunta.opcion_c }}')">{{ pregunta.opcion_c }}</button>
+                <button class="btn-opt" onclick="enviarRespuesta('{{ pregunta.opcion_d }}')">{{ pregunta.opcion_d }}</button>
             </div>
         {% endif %}
     </div>
 
-    <button id="btn_finalizar" class="btn-terminar" onclick="irAResultados()">Ver Resultados</button>
-
-    <button style="margin-top:40px; background:#5f6368;" class="btn-enviar" onclick="abandonar()">Abandonar Examen</button>
+    <button id="btn_finalizar" class="btn-terminar" onclick="irAResultados()">Finalizar y ver resultados</button>
+    <button class="abandonar" onclick="abandonar()">— Abandonar examen —</button>
 </div>
 
 <script>
-    // --- LÓGICA DE PROGRESO ---
     let historial = JSON.parse(localStorage.getItem('respuestas_examen') || '[]');
-    
-    // Evitamos que el contador visual pase de 20
     let numActual = historial.length + 1;
     document.getElementById('num_pregunta').innerText = numActual > 20 ? 20 : numActual;
 
-    // --- CRONÓMETRO DE 3 MINUTOS ---
-    let tiempoRestante = 90; 
+    let tiempoRestante = 180; 
     const clockDisplay = document.getElementById('clock');
     
     const timerInterval = setInterval(() => {
         let min = Math.floor(tiempoRestante / 60);
         let sec = tiempoRestante % 60;
         clockDisplay.innerText = `${min}:${sec < 10 ? '0' : ''}${sec}`;
-        
         if (tiempoRestante <= 0) {
             clearInterval(timerInterval);
-            alert("¡Se acabó el tiempo para esta pregunta!");
             enviarRespuesta("TIEMPO AGOTADO"); 
         }
         tiempoRestante--;
     }, 1000);
 
-    // --- FUNCIÓN ENVIAR CORREGIDA ---
     function enviarRespuesta(valor) {
-        if(!valor && valor !== "TIEMPO AGOTADO") return alert("Escribe o selecciona una respuesta");
+        if(!valor && valor !== "TIEMPO AGOTADO") return;
         
         historial.push({ id: {{ pregunta.id }}, respuesta: valor });
         localStorage.setItem('respuestas_examen', JSON.stringify(historial));
@@ -92,20 +229,10 @@
         .then(res => res.json())
         .then(data => {
             if (historial.length >= 20) {
-                // FINAL DEL EXAMEN
-                clearInterval(timerInterval); // Detenemos el reloj inmediatamente
-                
-                // Ocultamos el examen para que no bloquee los clics
+                clearInterval(timerInterval);
                 document.getElementById('contenedor-respuestas').style.display = 'none';
-                
-                // Mostramos el botón de resultados con alta prioridad
-                let btnFin = document.getElementById('btn_finalizar');
-                btnFin.style.display = 'block';
-                
-                if(valor !== "TIEMPO AGOTADO") alert(data.msg + "\nExamen completado.");
+                document.getElementById('btn_finalizar').style.display = 'block';
             } else {
-                // SIGUIENTE PREGUNTA
-                if(valor !== "TIEMPO AGOTADO") alert(data.msg);
                 location.reload(); 
             }
         });
@@ -125,7 +252,7 @@
     }
 
     function abandonar() {
-        if(confirm("¿Estás seguro? Se perderá tu progreso.")) {
+        if(confirm("¿Seguro que quieres salir?")) {
             localStorage.removeItem('respuestas_examen');
             window.location.href = '/dashboard';
         }
