@@ -10,18 +10,16 @@
         :root {
             --bg: #f8f9fa;
             --card-bg: #ffffff;
-            --primary: #2d3436; /* Color oscuro minimalista */
-            --accent: #0984e3;  /* Azul sutil */
-            --text-main: #2d3436;
-            --text-muted: #636e72;
-            --error: #d63031;
+            --primary: #2d3436;
+            --accent: #0984e3;
             --success: #00b894;
+            --error: #d63031;
+            --text-muted: #636e72;
         }
 
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: var(--bg); 
-            color: var(--text-main);
             margin: 0;
             display: flex;
             justify-content: center;
@@ -36,152 +34,68 @@
             padding: 40px; 
             border-radius: 24px; 
             box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-            position: relative;
+            text-align: center;
         }
 
         .header-info {
             display: flex;
             justify-content: space-between;
-            align-items: center;
             margin-bottom: 30px;
         }
 
-        .timer { 
-            font-weight: 600;
-            font-size: 1.1rem;
-            color: var(--error);
-            background: #fff5f5;
-            padding: 8px 15px;
-            border-radius: 12px;
-        }
+        .timer { color: var(--error); font-weight: 600; background: #fff5f5; padding: 5px 12px; border-radius: 8px; }
 
-        .progreso { 
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
+        .enunciado { font-size: 1.2rem; margin: 30px 0; min-height: 60px; line-height: 1.6; }
 
-        h2 { 
-            font-weight: 600; 
-            font-size: 1.5rem;
-            margin: 0 0 10px 0;
-            color: var(--primary);
-        }
-
-        .enunciado {
-            font-size: 1.2rem;
-            line-height: 1.6;
-            margin: 30px 0;
-            color: var(--text-main);
-            min-height: 80px;
-        }
-
-        /* Estilo para Inputs y Botones */
         .input-mate { 
-            width: 100%; 
-            padding: 16px; 
-            border: 1.5px solid #e1e4e8;
-            border-radius: 14px; 
-            font-size: 1rem;
-            outline: none;
-            transition: border-color 0.3s;
-            margin-bottom: 10px;
+            width: 100%; padding: 15px; border: 1.5px solid #e1e4e8;
+            border-radius: 12px; font-size: 1rem; box-sizing: border-box;
         }
 
-        .input-mate:focus { border-color: var(--accent); }
-
-        .opciones-grid { 
-            display: grid; 
-            grid-template-columns: 1fr; 
-            gap: 12px; 
-        }
+        .opciones-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
 
         .btn-opt { 
-            padding: 16px; 
-            border: 1.5px solid #f1f2f6;
-            background: #f1f2f6;
-            color: var(--text-main);
-            border-radius: 14px; 
-            cursor: pointer; 
-            font-weight: 500;
-            font-size: 1rem;
-            transition: all 0.2s;
-            text-align: left;
+            padding: 15px; border: 1.5px solid #f1f2f6; background: #f1f2f6;
+            border-radius: 12px; cursor: pointer; text-align: left; font-size: 1rem;
         }
 
-        .btn-opt:hover { 
-            background: var(--accent); 
-            color: white; 
-            border-color: var(--accent);
-            transform: translateY(-2px);
-        }
+        .btn-opt:hover { background: var(--accent); color: white; }
 
         .btn-enviar { 
-            background: var(--primary); 
-            color: white; 
-            border: none; 
-            padding: 18px; 
-            width: 100%; 
-            border-radius: 14px; 
-            margin-top: 20px; 
-            cursor: pointer; 
-            font-size: 1rem; 
-            font-weight: 600;
-            transition: opacity 0.3s;
+            background: var(--primary); color: white; border: none; 
+            padding: 18px; width: 100%; border-radius: 12px; 
+            margin-top: 20px; cursor: pointer; font-weight: 600;
         }
 
-        .btn-enviar:hover { opacity: 0.9; }
-
+        /* BOTÓN DE FINALIZAR MEJORADO */
         .btn-terminar { 
-            background: var(--success); 
-            color: white; 
-            border: none; 
-            padding: 18px; 
-            width: 100%; 
-            border-radius: 14px; 
-            margin-top: 20px; 
-            cursor: pointer; 
-            font-weight: 600; 
-            display: none; 
+            background: var(--success); color: white; border: none; 
+            padding: 18px; width: 100%; border-radius: 12px; 
+            margin-top: 20px; cursor: pointer; font-weight: 600; 
+            display: none; /* Se activa por JS */
         }
 
-        .abandonar {
-            display: block;
-            margin-top: 30px;
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 0.85rem;
-            background: none;
-            border: none;
-            cursor: pointer;
-            width: 100%;
-        }
-
-        .abandonar:hover { color: var(--error); }
-
-        .hint { font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; }
+        .abandonar { margin-top: 25px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.8rem; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header-info">
-        <span class="progreso">Pregunta <span id="num_pregunta">1</span> / 20</span>
+        <span style="color: var(--text-muted);">Pregunta <span id="num_pregunta">1</span>/20</span>
         <div class="timer" id="clock">03:00</div>
     </div>
     
-    <h2>{{ materia.nombre }}</h2>
+    <h2 style="margin:0;">{{ materia.nombre }}</h2>
     
-    <div class="enunciado">
+    <div class="enunciado" id="area-enunciado">
         {{ pregunta.enunciado | safe }}
     </div>
 
     <div id="contenedor-respuestas">
         {% if materia.es_exacta %}
-            <input type="text" id="resp_abierta" class="input-mate" placeholder="Escribe tu respuesta..." autofocus>
-            <p class="hint">Ejemplo: 4/x, x**6, sin(x), sqrt(x)</p>
-            <button class="btn-enviar" onclick="enviarRespuesta(document.getElementById('resp_abierta').value)">Confirmar respuesta</button>
+            <input type="text" id="resp_abierta" class="input-mate" placeholder="Tu respuesta (ej: 4/x, x**2)..." autofocus>
+            <button class="btn-enviar" onclick="enviarRespuesta(document.getElementById('resp_abierta').value)">Confirmar</button>
         {% else %}
             <div class="opciones-grid">
                 <button class="btn-opt" onclick="enviarRespuesta('{{ pregunta.opcion_a }}')">{{ pregunta.opcion_a }}</button>
@@ -192,34 +106,33 @@
         {% endif %}
     </div>
 
-    <button id="btn_finalizar" class="btn-terminar" onclick="irAResultados()">Finalizar y ver resultados</button>
-    <button class="abandonar" onclick="abandonar()">— Abandonar examen —</button>
+    <button id="btn_finalizar" class="btn-terminar" onclick="irAResultados()">
+        Ver Resultados del Examen
+    </button>
+
+    <button class="abandonar" onclick="abandonar()">— Abandonar —</button>
 </div>
 
 <script>
     let historial = JSON.parse(localStorage.getItem('respuestas_examen') || '[]');
-    let numActual = historial.length + 1;
-    document.getElementById('num_pregunta').innerText = numActual > 20 ? 20 : numActual;
+    document.getElementById('num_pregunta').innerText = historial.length + 1;
 
-    let tiempoRestante = 180; 
-    const clockDisplay = document.getElementById('clock');
-    
-    const timerInterval = setInterval(() => {
-        let min = Math.floor(tiempoRestante / 60);
-        let sec = tiempoRestante % 60;
-        clockDisplay.innerText = `${min}:${sec < 10 ? '0' : ''}${sec}`;
-        if (tiempoRestante <= 0) {
-            clearInterval(timerInterval);
-            enviarRespuesta("TIEMPO AGOTADO"); 
-        }
-        tiempoRestante--;
+    // Reloj
+    let tiempo = 180;
+    const tInterval = setInterval(() => {
+        let m = Math.floor(tiempo / 60);
+        let s = tiempo % 60;
+        document.getElementById('clock').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+        if (tiempo <= 0) { clearInterval(tInterval); enviarRespuesta("TIEMPO AGOTADO"); }
+        tiempo--;
     }, 1000);
 
     function enviarRespuesta(valor) {
         if(!valor && valor !== "TIEMPO AGOTADO") return;
         
-        historial.push({ id: {{ pregunta.id }}, respuesta: valor });
-        localStorage.setItem('respuestas_examen', JSON.stringify(historial));
+        // Bloqueo visual
+        document.getElementById('contenedor-respuestas').style.opacity = "0.4";
+        document.getElementById('contenedor-respuestas').style.pointerEvents = "none";
 
         fetch('/verificar', {
             method: 'POST',
@@ -228,13 +141,30 @@
         })
         .then(res => res.json())
         .then(data => {
-            if (historial.length >= 20) {
-                clearInterval(timerInterval);
-                document.getElementById('contenedor-respuestas').style.display = 'none';
-                document.getElementById('btn_finalizar').style.display = 'block';
-            } else {
-                location.reload(); 
-            }
+            // Notificación
+            const fed = document.createElement('div');
+            fed.innerText = data.msg;
+            Object.assign(fed.style, {
+                position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)',
+                padding: '15px 30px', borderRadius: '12px', color: 'white', zIndex: '1000',
+                background: data.status === "ok" ? '#00b894' : '#d63031', fontWeight: 'bold'
+            });
+            document.body.appendChild(fed);
+
+            historial.push({ id: {{ pregunta.id }}, respuesta: valor });
+            localStorage.setItem('respuestas_examen', JSON.stringify(historial));
+
+            setTimeout(() => {
+                fed.remove();
+                if (historial.length >= 20) {
+                    clearInterval(tInterval);
+                    document.getElementById('area-enunciado').innerHTML = "<h3>¡Examen Finalizado!</h3>";
+                    document.getElementById('contenedor-respuestas').style.display = 'none';
+                    document.getElementById('btn_finalizar').style.display = 'block';
+                } else {
+                    location.reload();
+                }
+            }, 1500);
         });
     }
 
@@ -252,12 +182,11 @@
     }
 
     function abandonar() {
-        if(confirm("¿Seguro que quieres salir?")) {
+        if(confirm("¿Salir?")) {
             localStorage.removeItem('respuestas_examen');
             window.location.href = '/dashboard';
         }
     }
 </script>
-
 </body>
 </html>
