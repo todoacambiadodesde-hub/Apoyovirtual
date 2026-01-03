@@ -84,39 +84,34 @@ def examen(materia_id):
     
     try:
         modulo_path = f'materias_modulos.{nombre_folder}.preguntas'
+        # IMPORTACIÓN OPTIMIZADA: Solo recargamos si no estamos en Render
         modulo = importlib.import_module(modulo_path)
-        importlib.reload(modulo)
+        if os.environ.get('RENDER') is None:
+            importlib.reload(modulo)
         
-        if hasattr(modulo, 'obtener_20_preguntas'):
-            preguntas_data = modulo.obtener_20_preguntas()
-        else:
-            preguntas_data = modulo.LISTA_PREGUNTAS
+        preguntas_data = modulo.obtener_20_preguntas() if hasattr(modulo, 'obtener_20_preguntas') else modulo.LISTA_PREGUNTAS
         
-        # LIMPIEZA Y CARGA
+        # Limpieza de preguntas previas de esta materia para este usuario
         Pregunta.query.filter_by(materia_id=materia.id).delete()
         for p in preguntas_data:
             nueva = Pregunta(
                 enunciado=p['e'], 
                 respuesta_correcta=str(p['r']),
-                opcion_a=p.get('a'), 
-                opcion_b=p.get('b'),
-                opcion_c=p.get('c'), 
-                opcion_d=p.get('d'),
+                opcion_a=p.get('a'), opcion_b=p.get('b'),
+                opcion_c=p.get('c'), opcion_d=p.get('d'),
                 materia_id=materia.id
             )
             db.session.add(nueva)
         db.session.commit()
 
     except Exception as e:
-        print(f"Error cargando el módulo de {materia.nombre}: {e}")
+        print(f"Error en {materia.nombre}: {e}")
 
     preguntas_db = Pregunta.query.filter_by(materia_id=materia.id).all()
     if not preguntas_db:
-        return f"<h1>Error: No hay preguntas cargadas para {materia.nombre}</h1>"
+        return "<h1>Error: No se pudieron cargar preguntas. Revisa los logs.</h1>"
 
     pregunta = random.choice(preguntas_db)
-    
-    # IMPORTANTE: Aquí pasamos la pregunta. Si tiene opcion_a, el HTML mostrará botones.
     return render_template('examen.html', materia=materia, pregunta=pregunta)
 
 @app.route('/verificar', methods=['POST'])
@@ -127,12 +122,12 @@ def verificar():
     user_ans = data.get('respuesta', '').strip()
     correcta = pregunta.respuesta_correcta.strip()
 
-    # 1. CASO OPCIÓN MÚLTIPLE
+    # 1. OPCIÓN MÚLTIPLE (Prioridad)
     if pregunta.opcion_a:
         if user_ans.upper() == correcta.upper():
             return jsonify({"status": "ok", "msg": "¡Correcto! ✅"})
     
-    # 2. CASO CIENCIAS (Exactas / Multihuecos)
+    # 2. CIENCIAS EXACTAS (Cálculo / Física / Química Multihueco)
     elif materia.es_exacta:
         try:
             if "," in correcta:
@@ -170,20 +165,17 @@ def finalizar():
     for item in historial:
         pregunta_db = Pregunta.query.get(item['id'])
         if not pregunta_db: continue
-            
         materia = Materia.query.get(pregunta_db.materia_id)
         nombre_materia = materia.nombre
         user_ans_raw = str(item['respuesta']).strip()
         correct_ans_raw = str(pregunta_db.respuesta_correcta).strip()
+        
         es_correcta = False
-
-        # Lógica de validación para el resumen (Espejo de /verificar)
         if pregunta_db.opcion_a:
             es_correcta = (user_ans_raw.upper() == correct_ans_raw.upper())
         elif materia.es_exacta:
             try:
-                u_proc = procesar_respuesta_usuario(user_ans_raw)
-                c_proc = procesar_respuesta_usuario(correct_ans_raw)
+                u_proc, c_proc = procesar_respuesta_usuario(user_ans_raw), procesar_respuesta_usuario(correct_ans_raw)
                 es_correcta = (simplify(sympify(u_proc) - sympify(c_proc)) == 0)
             except:
                 es_correcta = (user_ans_raw.lower() == correct_ans_raw.lower())
@@ -191,12 +183,7 @@ def finalizar():
             es_correcta = (user_ans_raw.lower() == correct_ans_raw.lower())
 
         if es_correcta: aciertos += 1
-        resumen_detalle.append({
-            "enunciado": pregunta_db.enunciado,
-            "tu_respuesta": user_ans_raw,
-            "correcta": correct_ans_raw,
-            "es_correcta": es_correcta
-        })
+        resumen_detalle.append({"enunciado": pregunta_db.enunciado, "tu_respuesta": user_ans_raw, "correcta": correct_ans_raw, "es_correcta": es_correcta})
 
     session['resumen_examen'] = {"materia": nombre_materia, "aciertos": aciertos, "total": len(historial), "detalle": resumen_detalle}
     return jsonify({"redirect": url_for('ver_resultados')})
@@ -205,26 +192,25 @@ def finalizar():
 def ver_resultados():
     if 'usuario_nombre' not in session or 'resumen_examen' not in session:
         return redirect(url_for('dashboard'))
-    resultado = session.get('resumen_examen')
-    return render_template('resultados.html', r=resultado)
+    return render_template('resultados.html', r=session.get('resumen_examen'))
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        materias_nombres = [
-            ('Cálculo', True), ('Física', True), ('Física para Ingenierías', True),
-            ('Temas selectos de Matemáticas', True), ('Temas selectos de Química', True),
-            ('Bioquímica', False), ('Biología Celular', False), ('Microbiología', False),
-            ('Filosofía (Prob. del conocimiento)', False), ('Psicología', False),
-            ('Economía', False), ('Lengua Extranjera', False), ('Intr. al Derecho', False),
-            ('Intr. a las Cs. Sociales', False), ('Procesos Económicos', False)
-        ]
-
+        # Solo crea materias si la DB está vacía
         if not Materia.query.first():
+            materias_nombres = [
+                ('Cálculo', True), ('Física', True), ('Física para Ingenierías', True),
+                ('Temas selectos de Matemáticas', True), ('Temas selectos de Química', True),
+                ('Bioquímica', False), ('Biología Celular', False), ('Microbiología', False),
+                ('Filosofía (Prob. del conocimiento)', False), ('Psicología', False),
+                ('Economía', False), ('Lengua Extranjera', False), ('Intr. al Derecho', False),
+                ('Intr. a las Cs. Sociales', False), ('Procesos Económicos', False)
+            ]
             for nom, exa in materias_nombres:
-                m = Materia(nombre=nom, es_exacta=exa)
-                db.session.add(m)
+                db.session.add(Materia(nombre=nom, es_exacta=exa))
             db.session.commit()
 
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
+    
