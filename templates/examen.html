@@ -45,34 +45,40 @@
 
         .timer { color: var(--error); font-weight: 600; background: #fff5f5; padding: 5px 12px; border-radius: 8px; }
 
-        .enunciado { font-size: 1.2rem; margin: 30px 0; min-height: 60px; line-height: 1.6; }
+        .enunciado { font-size: 1.2rem; margin: 30px 0; min-height: 60px; line-height: 1.6; text-align: left; }
 
         .input-mate { 
             width: 100%; padding: 15px; border: 1.5px solid #e1e4e8;
             border-radius: 12px; font-size: 1rem; box-sizing: border-box;
+            outline: none; margin-bottom: 10px;
         }
 
-        .opciones-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        .input-hueco {
+            display: inline-block; width: 70px; border: none; border-bottom: 2px solid var(--accent);
+            text-align: center; font-weight: bold; background: #f0f7ff; outline: none;
+        }
+
+        .opciones-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 20px; }
 
         .btn-opt { 
-            padding: 15px; border: 1.5px solid #f1f2f6; background: #f1f2f6;
+            padding: 18px; border: 1.5px solid #f1f2f6; background: #f1f2f6;
             border-radius: 12px; cursor: pointer; text-align: left; font-size: 1rem;
+            transition: 0.2s;
         }
 
-        .btn-opt:hover { background: var(--accent); color: white; }
+        .btn-opt:hover { background: var(--accent); color: white; border-color: var(--accent); }
 
         .btn-enviar { 
             background: var(--primary); color: white; border: none; 
             padding: 18px; width: 100%; border-radius: 12px; 
-            margin-top: 20px; cursor: pointer; font-weight: 600;
+            cursor: pointer; font-weight: 600;
         }
 
-        /* BOTÓN DE FINALIZAR MEJORADO */
         .btn-terminar { 
             background: var(--success); color: white; border: none; 
             padding: 18px; width: 100%; border-radius: 12px; 
             margin-top: 20px; cursor: pointer; font-weight: 600; 
-            display: none; /* Se activa por JS */
+            display: none;
         }
 
         .abandonar { margin-top: 25px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.8rem; }
@@ -93,15 +99,17 @@
     </div>
 
     <div id="contenedor-respuestas">
-        {% if materia.es_exacta %}
-            <input type="text" id="resp_abierta" class="input-mate" placeholder="Tu respuesta (ej: 4/x, x**2)..." autofocus>
-            <button class="btn-enviar" onclick="enviarRespuesta(document.getElementById('resp_abierta').value)">Confirmar</button>
-        {% else %}
+        {% if pregunta.opcion_a %}
             <div class="opciones-grid">
-                <button class="btn-opt" onclick="enviarRespuesta('{{ pregunta.opcion_a }}')">{{ pregunta.opcion_a }}</button>
-                <button class="btn-opt" onclick="enviarRespuesta('{{ pregunta.opcion_b }}')">{{ pregunta.opcion_b }}</button>
-                <button class="btn-opt" onclick="enviarRespuesta('{{ pregunta.opcion_c }}')">{{ pregunta.opcion_c }}</button>
-                <button class="btn-opt" onclick="enviarRespuesta('{{ pregunta.opcion_d }}')">{{ pregunta.opcion_d }}</button>
+                <button class="btn-opt" onclick="enviarRespuesta('A')"><strong>A)</strong> {{ pregunta.opcion_a }}</button>
+                <button class="btn-opt" onclick="enviarRespuesta('B')"><strong>B)</strong> {{ pregunta.opcion_b }}</button>
+                <button class="btn-opt" onclick="enviarRespuesta('C')"><strong>C)</strong> {{ pregunta.opcion_c }}</button>
+                <button class="btn-opt" onclick="enviarRespuesta('D')"><strong>D)</strong> {{ pregunta.opcion_d }}</button>
+            </div>
+        {% else %}
+            <div id="controles-abiertos">
+                <input type="text" id="resp_abierta" class="input-mate" placeholder="Tu respuesta..." autofocus>
+                <button class="btn-enviar" onclick="recolectarYEnviar()">Confirmar Respuesta</button>
             </div>
         {% endif %}
     </div>
@@ -117,6 +125,15 @@
     let historial = JSON.parse(localStorage.getItem('respuestas_examen') || '[]');
     document.getElementById('num_pregunta').innerText = historial.length + 1;
 
+    // Lógica para detectar huecos [[_]]
+    const areaEnunciado = document.getElementById('area-enunciado');
+    const inputGrande = document.getElementById('resp_abierta');
+    
+    if (areaEnunciado.innerHTML.includes('[[_]]')) {
+        areaEnunciado.innerHTML = areaEnunciado.innerHTML.replace(/\[\[_\]\]/g, '<input type="text" class="input-hueco" placeholder="?">');
+        if (inputGrande) inputGrande.style.display = 'none';
+    }
+
     // Reloj
     let tiempo = 180;
     const tInterval = setInterval(() => {
@@ -127,10 +144,19 @@
         tiempo--;
     }, 1000);
 
+    function recolectarYEnviar() {
+        const huecos = document.querySelectorAll('.input-hueco');
+        if (huecos.length > 0) {
+            const valores = Array.from(huecos).map(h => h.value.trim()).join(',');
+            enviarRespuesta(valores);
+        } else {
+            enviarRespuesta(document.getElementById('resp_abierta').value);
+        }
+    }
+
     function enviarRespuesta(valor) {
         if(!valor && valor !== "TIEMPO AGOTADO") return;
         
-        // Bloqueo visual
         document.getElementById('contenedor-respuestas').style.opacity = "0.4";
         document.getElementById('contenedor-respuestas').style.pointerEvents = "none";
 
@@ -141,7 +167,6 @@
         })
         .then(res => res.json())
         .then(data => {
-            // Notificación
             const fed = document.createElement('div');
             fed.innerText = data.msg;
             Object.assign(fed.style, {
@@ -158,7 +183,7 @@
                 fed.remove();
                 if (historial.length >= 20) {
                     clearInterval(tInterval);
-                    document.getElementById('area-enunciado').innerHTML = "<h3>¡Examen Finalizado!</h3>";
+                    areaEnunciado.innerHTML = "<h3>¡Examen Finalizado!</h3>";
                     document.getElementById('contenedor-respuestas').style.display = 'none';
                     document.getElementById('btn_finalizar').style.display = 'block';
                 } else {
@@ -182,7 +207,7 @@
     }
 
     function abandonar() {
-        if(confirm("¿Salir?")) {
+        if(confirm("¿Deseas abandonar el examen?")) {
             localStorage.removeItem('respuestas_examen');
             window.location.href = '/dashboard';
         }

@@ -1,7 +1,7 @@
 import os
 import importlib
 import random
-import re  # Necesario para la reparación de sintaxis
+import re
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sympy import sympify, simplify
@@ -35,7 +35,6 @@ class Pregunta(db.Model):
     opcion_d = db.Column(db.String(200), nullable=True)
     materia_id = db.Column(db.Integer, db.ForeignKey('materia.id'), nullable=False)
 
-
 def normalizar_nombre(nombre):
     reemplazos = {'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', '(': '', ')': ''}
     n = nombre.lower()
@@ -44,23 +43,12 @@ def normalizar_nombre(nombre):
     return n.replace(" ", "_")
 
 def procesar_respuesta_usuario(texto):
-    """Limpia la respuesta, repara multiplicaciones y traduce potencias."""
     if not texto: return "0"
-    
-    # 1. Limpieza básica y minúsculas
     res = str(texto).lower().replace(' ', '')
-    
-    # 2. Traducir símbolos visuales a lenguaje SymPy
     res = res.replace('^', '**').replace('∞', 'oo').replace('infinito', 'oo')
-    
-    # 3. REPARACIÓN DE MULTIPLICACIÓN INVISIBLE (Ej: 8x -> 8*x)
-    # Número seguido de letra o paréntesis: 8x -> 8*x, 8( -> 8*(
     res = re.sub(r'(\d)([a-z\(])', r'\1*\2', res)
-    # Paréntesis seguido de letra, número o paréntesis: )x -> )*x, )( -> )*(
     res = re.sub(r'(\))([a-z\d\(])', r'\1*\2', res)
-    # Letra 'x' seguida de una función: xcos -> x*cos
     res = re.sub(r'([x])([a-z\(])', r'\1*\2', res)
-    
     return res
 
 # --- RUTAS ---
@@ -104,11 +92,12 @@ def examen(materia_id):
         else:
             preguntas_data = modulo.LISTA_PREGUNTAS
         
+        # LIMPIEZA Y CARGA
         Pregunta.query.filter_by(materia_id=materia.id).delete()
         for p in preguntas_data:
             nueva = Pregunta(
                 enunciado=p['e'], 
-                respuesta_correcta=p['r'],
+                respuesta_correcta=str(p['r']),
                 opcion_a=p.get('a'), 
                 opcion_b=p.get('b'),
                 opcion_c=p.get('c'), 
@@ -126,34 +115,46 @@ def examen(materia_id):
         return f"<h1>Error: No hay preguntas cargadas para {materia.nombre}</h1>"
 
     pregunta = random.choice(preguntas_db)
-    return render_template('examen.html', materia=materia, pregunta=pregunta, es_exacta=materia.es_exacta)
+    
+    # IMPORTANTE: Aquí pasamos la pregunta. Si tiene opcion_a, el HTML mostrará botones.
+    return render_template('examen.html', materia=materia, pregunta=pregunta)
 
 @app.route('/verificar', methods=['POST'])
 def verificar():
     data = request.json
     pregunta = Pregunta.query.get(data['id'])
     materia = Materia.query.get(pregunta.materia_id)
-    
-    # Procesamos la respuesta del usuario para corregir su sintaxis automáticamente
-    user_ans = procesar_respuesta_usuario(data.get('respuesta', ''))
-    
-    if materia.es_exacta:
-        try:
-            correcta_db = procesar_respuesta_usuario(pregunta.respuesta_correcta)
-            # SymPy compara si la diferencia es cero para aceptar variantes matemáticas
-            if simplify(sympify(user_ans) - sympify(correcta_db)) == 0:
-                return jsonify({"status": "ok", "msg": "¡Correcto! ✅"})
-        except Exception:
-            # Mensaje educativo para errores de formato
-            return jsonify({
-                "status": "error", 
-                "msg": "Formato no reconocido. Asegúrate de cerrar todos los paréntesis y usar funciones como cos(x) o log(x)."
-            })
-    else:
-        if user_ans.strip().lower() == pregunta.respuesta_correcta.strip().lower():
+    user_ans = data.get('respuesta', '').strip()
+    correcta = pregunta.respuesta_correcta.strip()
+
+    # 1. CASO OPCIÓN MÚLTIPLE
+    if pregunta.opcion_a:
+        if user_ans.upper() == correcta.upper():
             return jsonify({"status": "ok", "msg": "¡Correcto! ✅"})
     
-    return jsonify({"status": "error", "msg": f"Incorrecto. Era: {pregunta.respuesta_correcta}"})
+    # 2. CASO CIENCIAS (Exactas / Multihuecos)
+    elif materia.es_exacta:
+        try:
+            if "," in correcta:
+                u_parts = [procesar_respuesta_usuario(x) for x in user_ans.split(",")]
+                c_parts = [procesar_respuesta_usuario(x) for x in correcta.split(",")]
+                if len(u_parts) == len(c_parts) and all(simplify(sympify(u) - sympify(c)) == 0 for u, c in zip(u_parts, c_parts)):
+                    return jsonify({"status": "ok", "msg": "¡Todo correcto! ✅"})
+            else:
+                u = procesar_respuesta_usuario(user_ans)
+                c = procesar_respuesta_usuario(correcta)
+                if simplify(sympify(u) - sympify(c)) == 0:
+                    return jsonify({"status": "ok", "msg": "¡Correcto! ✅"})
+        except:
+            if user_ans.lower() == correcta.lower():
+                return jsonify({"status": "ok", "msg": "¡Correcto! ✅"})
+
+    # 3. HUMANIDADES / OTROS
+    else:
+        if user_ans.lower() == correcta.lower():
+            return jsonify({"status": "ok", "msg": "¡Correcto! ✅"})
+
+    return jsonify({"status": "error", "msg": f"Incorrecto. Era: {correcta}"})
 
 @app.route('/finalizar', methods=['POST'])
 def finalizar():
@@ -162,7 +163,6 @@ def finalizar():
     
     data = request.json
     historial = data.get('respuestas', [])
-    
     resumen_detalle = []
     aciertos = 0
     nombre_materia = "Examen"
@@ -177,21 +177,20 @@ def finalizar():
         correct_ans_raw = str(pregunta_db.respuesta_correcta).strip()
         es_correcta = False
 
-        if materia.es_exacta:
+        # Lógica de validación para el resumen (Espejo de /verificar)
+        if pregunta_db.opcion_a:
+            es_correcta = (user_ans_raw.upper() == correct_ans_raw.upper())
+        elif materia.es_exacta:
             try:
                 u_proc = procesar_respuesta_usuario(user_ans_raw)
                 c_proc = procesar_respuesta_usuario(correct_ans_raw)
-                if simplify(sympify(u_proc) - sympify(c_proc)) == 0:
-                    es_correcta = True
+                es_correcta = (simplify(sympify(u_proc) - sympify(c_proc)) == 0)
             except:
-                if user_ans_raw.lower() == correct_ans_raw.lower():
-                    es_correcta = True
+                es_correcta = (user_ans_raw.lower() == correct_ans_raw.lower())
         else:
-            if user_ans_raw.lower() == correct_ans_raw.lower():
-                es_correcta = True
+            es_correcta = (user_ans_raw.lower() == correct_ans_raw.lower())
 
         if es_correcta: aciertos += 1
-
         resumen_detalle.append({
             "enunciado": pregunta_db.enunciado,
             "tu_respuesta": user_ans_raw,
@@ -199,13 +198,7 @@ def finalizar():
             "es_correcta": es_correcta
         })
 
-    session['resumen_examen'] = {
-        "materia": nombre_materia,
-        "aciertos": aciertos,
-        "total": len(historial),
-        "detalle": resumen_detalle
-    }
-
+    session['resumen_examen'] = {"materia": nombre_materia, "aciertos": aciertos, "total": len(historial), "detalle": resumen_detalle}
     return jsonify({"redirect": url_for('ver_resultados')})
 
 @app.route('/resultados')
@@ -218,7 +211,6 @@ def ver_resultados():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        
         materias_nombres = [
             ('Cálculo', True), ('Física', True), ('Física para Ingenierías', True),
             ('Temas selectos de Matemáticas', True), ('Temas selectos de Química', True),
@@ -234,20 +226,5 @@ if __name__ == '__main__':
                 db.session.add(m)
             db.session.commit()
 
-        base_modulos = os.path.join(basedir, 'materias_modulos')
-        if not os.path.exists(base_modulos):
-            os.makedirs(base_modulos)
-
-        for nom, _ in materias_nombres:
-            folder = normalizar_nombre(nom)
-            ruta_folder = os.path.join(base_modulos, folder)
-            if not os.path.exists(ruta_folder):
-                os.makedirs(ruta_folder)
-                preg_path = os.path.join(ruta_folder, 'preguntas.py')
-                if not os.path.exists(preg_path):
-                    with open(preg_path, 'w', encoding='utf-8') as f:
-                        f.write('LISTA_PREGUNTAS = [{"e": "Pregunta de prueba", "r": "0"}]')
-
-    # Configuración correcta para el puerto en Render
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)

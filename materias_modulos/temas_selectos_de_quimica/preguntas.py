@@ -1,37 +1,28 @@
+import json
+import os
 import random
 
-# Banco de ejercicios de Química (Exactas)
-# Nota: No llevan llaves 'a, b, c, d' para que el HTML muestre el cuadro de texto.
-BANCO_QUIMICA = [
-    {
-        "e": "Calcule la masa molar del Ácido Sulfúrico ($H_2SO_4$). <br>Datos: H=1, S=32, O=16. <br><b>Indique solo el número en g/mol:</b>",
-        "r": "98"
-    },
-    {
-        "e": "En la reacción $N_2 + 3H_2 \\rightarrow 2NH_3$, ¿cuántos moles de $H_2$ se necesitan para producir 10 moles de $NH_3$?",
-        "r": "15"
-    },
-    {
-        "e": "Un gas ocupa 2L a una presión de 3 atm. Si el volumen aumenta a 6L a temperatura constante, ¿cuál será la nueva presión en atm? (Ley de Boyle)",
-        "r": "1"
-    },
-    {
-        "e": "¿Cuál es el pH de una solución cuya concentración de iones hidrógeno $[H^+]$ es $1 \\times 10^{-5}$ M?",
-        "r": "5"
-    },
-    {
-        "e": "Determine la molaridad (M) de una solución que contiene 2 moles de soluto en 4 litros de disolución.",
-        "r": "0.5"
-    }
-]
+def cargar_desde_json():
+    # Buscamos la carpeta donde vive este archivo preguntas.py
+    directorio_actual = os.path.dirname(os.path.abspath(__file__))
+    ruta_json = os.path.join(directorio_actual, 'preguntasquimica.json')
+    
+    if os.path.exists(ruta_json):
+        try:
+            with open(ruta_json, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            return [{"e": f"Error de lectura JSON: {e}", "r": "0", "id": "ERR"}]
+    
+    # Si no existe, lanza este error que viste en tu captura
+    return [{"e": "Error: preguntasquimica.json no encontrado en la carpeta", "r": "0", "id": "ERR"}]
 
 def obtener_20_preguntas():
-    """
-    Retorna 20 preguntas. 
-    Como el banco es pequeño, usamos random.choices para completar las 20 
-    hasta que agregues más ejercicios manuales.
-    """
-    return random.choices(BANCO_QUIMICA, k=20)
+    todas = cargar_desde_json()
+    # Si hay un error, no intentamos hacer sample para no romper la app
+    if "Error" in todas[0]['e']:
+        return todas
+    return random.sample(todas, min(len(todas), 20))
 
-# Variable necesaria para la carga dinámica de tu app.py
-LISTA_PREGUNTAS = obtener_20_preguntas()
+# Mantenemos esto para que tu esqueleto original no falle al importar
+LISTA_PREGUNTAS = cargar_desde_json()
