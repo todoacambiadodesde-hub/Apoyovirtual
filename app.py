@@ -76,26 +76,33 @@ def dashboard():
 
 @app.route('/examen/<int:materia_id>')
 def examen(materia_id):
-    if 'usuario_nombre' not in session:
-        return redirect(url_for('index'))
+    if 'usuario_nombre' not in session: return redirect(url_for('index'))
     
     materia = Materia.query.get_or_404(materia_id)
     nombre_folder = normalizar_nombre(materia.nombre)
     
     try:
         modulo_path = f'materias_modulos.{nombre_folder}.preguntas'
-        # IMPORTACIÓN OPTIMIZADA: Solo recargamos si no estamos en Render
         modulo = importlib.import_module(modulo_path)
-        if os.environ.get('RENDER') is None:
-            importlib.reload(modulo)
+        if os.environ.get('RENDER') is None: importlib.reload(modulo)
         
         preguntas_data = modulo.obtener_20_preguntas() if hasattr(modulo, 'obtener_20_preguntas') else modulo.LISTA_PREGUNTAS
         
-        # Limpieza de preguntas previas de esta materia para este usuario
         Pregunta.query.filter_by(materia_id=materia.id).delete()
         for p in preguntas_data:
+            enunciado_final = p['e']
+            
+            # --- LÓGICA DE MULTIHUECOS ---
+            # Si el JSON dice que es multihueco, agregamos los espacios [[_]] al final
+            if p.get('tipo') == 'multihueco':
+                # Contamos cuántas respuestas hay separadas por coma
+                respuestas_lista = str(p['r']).split(',')
+                # Agregamos un cuadrito [[_]] por cada respuesta para que el HTML los renderice
+                espacios = " ".join(["[[_]]" for _ in respuestas_lista])
+                enunciado_final += f"<br><br>{espacios}"
+            
             nueva = Pregunta(
-                enunciado=p['e'], 
+                enunciado=enunciado_final,
                 respuesta_correcta=str(p['r']),
                 opcion_a=p.get('a'), opcion_b=p.get('b'),
                 opcion_c=p.get('c'), opcion_d=p.get('d'),
@@ -103,14 +110,10 @@ def examen(materia_id):
             )
             db.session.add(nueva)
         db.session.commit()
-
     except Exception as e:
-        print(f"Error en {materia.nombre}: {e}")
+        print(f"Error cargando materia {materia.nombre}: {e}")
 
     preguntas_db = Pregunta.query.filter_by(materia_id=materia.id).all()
-    if not preguntas_db:
-        return "<h1>Error: No se pudieron cargar preguntas. Revisa los logs.</h1>"
-
     pregunta = random.choice(preguntas_db)
     return render_template('examen.html', materia=materia, pregunta=pregunta)
 
