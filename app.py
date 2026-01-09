@@ -200,11 +200,18 @@ def ver_resultados():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        # Solo crea materias si la DB está vacía
+        materias_nombres = [
+            ('Cálculo', True), ('Física', True), ('Estadistica', True), ('Física para Ingenierías', True), ('Estadistica', True),
+            ('Calculo integral e diferencial', True), ('Temas selectos de Química', True),
+            ('Bioquímica', False), ('Biología Celular', False), ('Microbiología', False),
+            ('Filosofía (Prob. del conocimiento)', False), ('Psicología', False),
+            ('Economía', False), ('Lengua Extranjera', False), ('Intr. al Derecho', False),
+            ('Intr. a las Cs. Sociales', False), ('Procesos Económicos', False)
+        ]
         if not Materia.query.first():
             materias_nombres = [
                 ('Cálculo', True), ('Estadistica', True), ('Física', True), ('Física para Ingenierías', True),
-                ('Temas selectos de Fisica II', True), ('Temas selectos de Química', True),
+                ('Calculo integral e diferencial', True), ('Temas selectos de Química', True),
                 ('Bioquímica', False), ('Biología Celular', False), ('Microbiología', False),
                 ('Filosofía (Prob. del conocimiento)', False), ('Psicología', False),
                 ('Economía', False), ('Lengua Extranjera', False), ('Intr. al Derecho', False),
