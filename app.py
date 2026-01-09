@@ -203,8 +203,8 @@ if __name__ == '__main__':
         # Solo crea materias si la DB está vacía
         if not Materia.query.first():
             materias_nombres = [
-                ('Cálculo', True), ('Física', True), ('Física para Ingenierías', True),
-                ('Temas selectos de Matemáticas', True), ('Temas selectos de Química', True),
+                ('Cálculo', True), ('Estadistica', True), ('Física', True), ('Física para Ingenierías', True),
+                ('Temas selectos de Fisica II', True), ('Temas selectos de Química', True),
                 ('Bioquímica', False), ('Biología Celular', False), ('Microbiología', False),
                 ('Filosofía (Prob. del conocimiento)', False), ('Psicología', False),
                 ('Economía', False), ('Lengua Extranjera', False), ('Intr. al Derecho', False),
