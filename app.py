@@ -201,7 +201,7 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         materias_nombres = [
-            ('Cálculo', True), ('Física', True), ('Estadistica', True), ('Física para Ingenierías', True), ('Estadistica', True),
+            ('Cálculo', True), ('Física', True), ('Estadistica', True), ('Física para Ingenierías', True),
             ('Calculo integral e diferencial', True), ('Temas selectos de Química', True),
             ('Bioquímica', False), ('Biología Celular', False), ('Microbiología', False),
             ('Filosofía (Prob. del conocimiento)', False), ('Psicología', False),
